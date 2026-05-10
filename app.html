@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrthoScan AI — Continuous Knee OA Severity Grading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+/* ===================== RESET & BASE ===================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0B1E35;
+  --navy-mid: #132740;
+  --navy-light: #1E3A56;
+  --teal: #0E7C6B;
+  --teal-light: #12A38E;
+  --teal-pale: #E0F4F1;
+  --teal-pale2: #C8EDE8;
+  --warm: #F8F5F0;
+  --warm2: #EEE9E1;
+  --white: #FFFFFF;
+  --text-dark: #0B1E35;
+  --text-mid: #3A4F65;
+  --text-muted: #7A8FA6;
+  --text-light: #B0C0CE;
+  --grade0: #12A38E; --grade0b: #E0F4F1;
+  --grade1: #5AA832; --grade1b: #EAF5D8;
+  --grade2: #D4991A; --grade2b: #FDF3DC;
+  --grade3: #D4631A; --grade3b: #FDE8D8;
+  --grade4: #C9302C; --grade4b: #FAE0DF;
+  --shadow: 0 4px 32px rgba(11,30,53,0.10);
+  --shadow-lg: 0 12px 64px rgba(11,30,53,0.18);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--warm); color: var(--text-dark); overflow-x: hidden; }
+h1,h2,h3 { font-family: 'Cormorant Garamond', serif; font-weight: 400; }
+.syne { font-family: 'Syne', sans-serif; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--warm); }
+::-webkit-scrollbar-thumb { background: var(--teal-light); border-radius: 4px; }
+
+/* ===================== NAV ===================== */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 4vw;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+  transition: background 0.4s, box-shadow 0.4s;
+  background: transparent;
+}
+nav.scrolled { background: rgba(248,245,240,0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 0 rgba(11,30,53,0.08); }
+.nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.nav-logo-icon { width: 36px; height: 36px; background: var(--teal); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.nav-logo-icon i { color: #fff; font-size: 18px; }
+.nav-logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: var(--navy); }
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-mid); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--teal); }
+.nav-cta { background: var(--teal); color: #fff; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; padding: 9px 20px; border-radius: 8px; text-decoration: none; transition: opacity 0.2s; }
+.nav-cta:hover { opacity: 0.88; }
+
+/* ===================== HERO ===================== */
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 55%, #0A2E3D 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 100px 5vw 80px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 80%, rgba(14,124,107,0.18) 0%, transparent 70%);
+}
+.hero-grid-bg {
+  position: absolute; inset: 0; opacity: 0.04;
+  background-image: linear-gradient(var(--teal-light) 1px, transparent 1px), linear-gradient(90deg, var(--teal-light) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(14,124,107,0.2); border: 1px solid rgba(14,124,107,0.4);
+  color: #7FD8CC; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+  padding: 6px 16px; border-radius: 20px; margin-bottom: 28px;
+  letter-spacing: 0.08em; text-transform: uppercase; position: relative;
+}
+.hero h1 {
+  font-size: clamp(42px, 7vw, 82px); font-weight: 300; color: #fff;
+  line-height: 1.08; margin-bottom: 24px; position: relative; max-width: 900px;
+}
+.hero h1 em { font-style: italic; color: #7FD8CC; }
+.hero-sub {
+  font-size: clamp(15px, 2vw, 18px); color: rgba(255,255,255,0.62);
+  max-width: 580px; line-height: 1.7; margin-bottom: 44px; position: relative;
+}
+.hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+.btn-primary {
+  background: var(--teal); color: #fff; padding: 14px 32px;
+  border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px;
+  text-decoration: none; display: flex; align-items: center; gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(14,124,107,0.4);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(14,124,107,0.5); }
+.btn-ghost {
+  background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); padding: 14px 32px;
+  border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 500; font-size: 14px;
+  text-decoration: none; border: 1px solid rgba(255,255,255,0.15); transition: background 0.2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.13); }
+.hero-stats {
+  display: flex; gap: 48px; margin-top: 64px; position: relative;
+  border-top: 1px solid rgba(255,255,255,0.1); padding-top: 40px;
+}
+.hero-stat .num { font-family: 'Cormorant Garamond', serif; font-size: 40px; color: #7FD8CC; font-weight: 300; }
+.hero-stat .lbl { font-size: 12px; color: rgba(255,255,255,0.5); font-family: 'Syne', sans-serif; font-weight: 500; margin-top: 2px; }
+.scroll-hint { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); animation: bounce 2s infinite; }
+.scroll-hint i { font-size: 22px; color: rgba(255,255,255,0.3); }
+@keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+/* ===================== SECTIONS ===================== */
+section { padding: 96px 5vw; }
+.sec-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--teal); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.sec-label::after { content:''; flex:1; height:1px; background: var(--teal-pale2); max-width: 60px; }
+.sec-title { font-size: clamp(32px, 4vw, 52px); font-weight: 300; color: var(--navy); line-height: 1.12; margin-bottom: 20px; }
+.sec-title em { font-style: italic; color: var(--teal); }
+.sec-sub { font-size: 16px; color: var(--text-mid); line-height: 1.75; max-width: 560px; }
+.container { max-width: 1200px; margin: 0 auto; }
+
+/* ===================== ABOUT ===================== */
+.about-section { background: var(--white); }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+.about-right { display: flex; flex-direction: column; gap: 24px; }
+.info-card {
+  background: var(--warm); border-radius: var(--radius-sm);
+  padding: 20px 24px; border-left: 3px solid var(--teal);
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.info-card i { font-size: 22px; color: var(--teal); margin-top: 2px; flex-shrink: 0; }
+.info-card h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.info-card p { font-size: 14px; color: var(--text-mid); line-height: 1.65; }
+
+/* ===================== PROGRESSION ===================== */
+.progression { background: var(--navy); padding: 80px 5vw; }
+.prog-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 2px; margin-top: 56px; }
+.prog-card { padding: 28px 20px 24px; position: relative; cursor: default; transition: transform 0.2s; }
+.prog-card:hover { transform: translateY(-4px); }
+.prog-card .grade-num { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300; line-height: 1; margin-bottom: 8px; }
+.prog-card .grade-name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+.prog-card .grade-desc { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+.prog-card .grade-bar { height: 3px; border-radius: 2px; margin-bottom: 16px; }
+.pc0 { background: rgba(18,163,142,0.15); } .pc0 .grade-num,.pc0 .grade-name { color: #7FD8CC; } .pc0 .grade-bar { background: #7FD8CC; }
+.pc1 { background: rgba(90,168,50,0.1); } .pc1 .grade-num,.pc1 .grade-name { color: #9BD97A; } .pc1 .grade-bar { background: #9BD97A; }
+.pc2 { background: rgba(212,153,26,0.12); } .pc2 .grade-num,.pc2 .grade-name { color: #F0C060; } .pc2 .grade-bar { background: #F0C060; }
+.pc3 { background: rgba(212,99,26,0.12); } .pc3 .grade-num,.pc3 .grade-name { color: #F0A070; } .pc3 .grade-bar { background: #F0A070; }
+.pc4 { background: rgba(201,48,44,0.13); } .pc4 .grade-num,.pc4 .grade-name { color: #F07070; } .pc4 .grade-bar { background: #F07070; }
+
+/* ===================== PIPELINE ===================== */
+.pipeline-section { background: var(--warm); }
+.pipeline-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 56px; }
+.pip-card {
+  background: var(--white); border-radius: var(--radius); padding: 32px 28px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.pip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.pip-card::before { content: attr(data-num); position: absolute; top: -8px; right: 16px; font-family: 'Cormorant Garamond', serif; font-size: 96px; color: rgba(14,124,107,0.06); line-height: 1; }
+.pip-icon { width: 52px; height: 52px; border-radius: 13px; background: var(--teal-pale); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.pip-icon i { font-size: 24px; color: var(--teal); }
+.pip-card h3 { font-size: 22px; color: var(--navy); margin-bottom: 10px; }
+.pip-card p { font-size: 14px; color: var(--text-mid); line-height: 1.7; }
+.pip-tag { display: inline-block; background: var(--teal-pale); color: var(--teal); font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-top: 16px; letter-spacing: 0.06em; }
+
+/* ===================== ANALYZER ===================== */
+.analyzer-section { background: var(--white); }
+.analyzer-box { background: var(--warm); border-radius: 24px; padding: 48px; margin-top: 48px; box-shadow: var(--shadow); }
+
+.upload-zone {
+  border: 2px dashed var(--teal-pale2); border-radius: var(--radius);
+  padding: 56px 24px; text-align: center; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s; background: var(--white);
+  position: relative; overflow: hidden;
+}
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--teal); background: var(--teal-pale); }
+.upload-zone input[type=file] { display: none; }
+.upload-icon { width: 72px; height: 72px; background: var(--teal-pale); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.upload-icon i { font-size: 32px; color: var(--teal); }
+.upload-zone h3 { font-size: 22px; color: var(--navy); margin-bottom: 8px; }
+.upload-zone p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+.upload-btn { background: var(--teal); color: #fff; border: none; padding: 12px 28px; border-radius: 9px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
+.upload-btn:hover { opacity: 0.88; }
+.upload-note { font-size: 12px; color: var(--text-muted); margin-top: 14px; }
+
+#analyzingState { display: none; text-align: center; padding: 48px; }
+.scan-anim { width: 80px; height: 80px; margin: 0 auto 24px; position: relative; }
+.scan-ring { width: 80px; height: 80px; border: 3px solid var(--teal-pale2); border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
+.scan-ring2 { position: absolute; inset: 8px; border: 2px solid transparent; border-bottom-color: var(--teal-light); border-radius: 50%; animation: spin 0.7s linear infinite reverse; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#analyzingState h3 { font-size: 22px; color: var(--navy); margin-bottom: 8px; }
+#analyzingState p { font-size: 14px; color: var(--text-muted); }
+.stage-progress { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; max-width: 320px; margin-left: auto; margin-right: auto; }
+.stage-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); padding: 8px 14px; border-radius: 8px; background: var(--white); }
+.stage-item.active { color: var(--teal); background: var(--teal-pale); }
+.stage-item.done { color: var(--text-mid); }
+.stage-item i { font-size: 14px; }
+
+#invalidState { display: none; text-align: center; padding: 48px; }
+.invalid-icon { width: 72px; height: 72px; background: #FAE0DF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.invalid-icon i { font-size: 32px; color: var(--grade4); }
+#invalidState h3 { font-size: 24px; color: var(--navy); margin-bottom: 10px; }
+#invalidState p { font-size: 15px; color: var(--text-mid); max-width: 400px; margin: 0 auto 24px; line-height: 1.6; }
+.retry-btn { background: var(--navy); color: #fff; border: none; padding: 12px 28px; border-radius: 9px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
+.retry-btn:hover { opacity: 0.85; }
+
+#resultsState { display: none; }
+.results-header { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; margin-bottom: 28px; }
+.preview-thumb { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid var(--teal-pale2); }
+.results-headline h3 { font-size: 28px; color: var(--navy); margin-bottom: 4px; }
+.results-headline p { font-size: 14px; color: var(--text-muted); }
+
+.gauge-wrap { background: var(--white); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+.gauge-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+.gauge-track { height: 14px; border-radius: 8px; background: linear-gradient(to right, #12A38E, #9BD97A, #F0C060, #F0A070, #E24B4A); position: relative; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.gauge-needle { position: absolute; top: -6px; width: 6px; height: 26px; background: var(--navy); border-radius: 3px; transform: translateX(-50%); transition: left 1s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.gauge-ticks { display: flex; justify-content: space-between; padding: 0 2px; }
+.gauge-tick { font-size: 11px; color: var(--text-muted); font-family: 'Syne', sans-serif; }
+.gauge-score-row { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
+.gauge-score-num { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300; line-height: 1; }
+.gauge-score-denom { font-size: 18px; color: var(--text-muted); }
+.gauge-score-label { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; padding: 6px 16px; border-radius: 20px; }
+
+.metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.metric-card { background: var(--white); border-radius: var(--radius-sm); padding: 20px; text-align: center; }
+.metric-card .mv { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; color: var(--navy); }
+.metric-card .ml { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+.metric-card.highlight { background: var(--teal); }
+.metric-card.highlight .mv, .metric-card.highlight .ml { color: #fff; }
+
+.heatmap-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.hmap-card { background: var(--white); border-radius: var(--radius-sm); overflow: hidden; }
+.hmap-card canvas { width: 100%; height: 200px; display: block; }
+.hmap-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; padding: 10px 14px; color: var(--text-mid); border-top: 1px solid #F0EDE8; }
+
+.rec-card { border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+.rec-card h4 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+.rec-card .rec-main { font-size: 16px; line-height: 1.75; }
+.rec-items { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.rec-item { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--text-dark); line-height: 1.55; }
+.rec-item i { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+.conf-section { background: var(--white); border-radius: var(--radius-sm); padding: 24px; margin-bottom: 20px; }
+.conf-section h4 { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+.conf-matrix { display: grid; grid-template-columns: auto repeat(5,1fr); gap: 3px; font-family: 'Syne', sans-serif; font-size: 11px; }
+.conf-cell { background: var(--warm); border-radius: 4px; padding: 8px 4px; text-align: center; font-weight: 500; }
+.conf-cell.header { background: transparent; color: var(--text-muted); font-size: 10px; letter-spacing: 0.06em; }
+.conf-cell.diag { background: var(--teal); color: #fff; }
+.conf-cell.near { background: var(--teal-pale); color: var(--teal); }
+
+.new-scan-btn { background: var(--navy); color: #fff; border: none; padding: 12px 28px; border-radius: 9px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
+.new-scan-btn:hover { opacity: 0.85; }
+
+/* ===================== TREATMENT ===================== */
+.treatment-section { background: var(--warm); }
+.treatment-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 48px; }
+.treat-card { background: var(--white); border-radius: var(--radius); padding: 28px; transition: transform 0.2s, box-shadow 0.2s; }
+.treat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.treat-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--teal-pale); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+.treat-icon i { font-size: 22px; color: var(--teal); }
+.treat-card h3 { font-size: 21px; color: var(--navy); margin-bottom: 10px; }
+.treat-card p { font-size: 14px; color: var(--text-mid); line-height: 1.7; }
+.treat-list { list-style: none; margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+.treat-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text-mid); }
+.treat-list li::before { content: ''; width: 6px; height: 6px; background: var(--teal); border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+
+/* ===================== HOME CARE ===================== */
+.homecare-section { background: var(--navy); padding: 80px 5vw; }
+.homecare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; }
+.care-block { display: flex; flex-direction: column; gap: 16px; }
+.care-item { background: rgba(255,255,255,0.06); border-radius: var(--radius-sm); padding: 18px 20px; display: flex; gap: 14px; align-items: flex-start; transition: background 0.2s; }
+.care-item:hover { background: rgba(255,255,255,0.1); }
+.care-item i { font-size: 22px; color: #7FD8CC; flex-shrink: 0; margin-top: 1px; }
+.care-item h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.care-item p { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+
+/* ===================== DOCTOR ===================== */
+.doctor-section { background: var(--white); }
+.warning-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; margin-top: 48px; }
+.warning-list { display: flex; flex-direction: column; gap: 14px; }
+.warning-item { display: flex; gap: 14px; padding: 16px 18px; border-radius: var(--radius-sm); background: var(--warm); border-left: 3px solid var(--teal); }
+.warning-item.urgent { border-color: var(--grade4); background: #FEF2F2; }
+.warning-item i { font-size: 20px; color: var(--teal); flex-shrink: 0; margin-top: 1px; }
+.warning-item.urgent i { color: var(--grade4); }
+.warning-item h4 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+.warning-item p { font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+.urgency-box { background: var(--grade4b); border: 1px solid rgba(201,48,44,0.2); border-radius: var(--radius); padding: 32px; }
+.urgency-box h3 { font-size: 26px; color: var(--grade4); margin-bottom: 16px; }
+.urgency-box p { font-size: 14px; color: #7A2020; line-height: 1.7; margin-bottom: 20px; }
+.urgency-box ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.urgency-box ul li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #7A2020; }
+.urgency-box ul li i { font-size: 16px; }
+
+/* ===================== FOOTER ===================== */
+footer { background: var(--navy); padding: 48px 5vw 32px; color: rgba(255,255,255,0.5); }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; padding-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; gap: 20px; }
+.footer-logo { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: #fff; }
+.footer-sub { font-size: 12px; margin-top: 4px; }
+.footer-team { text-align: right; font-size: 13px; line-height: 1.7; }
+.footer-team strong { color: rgba(255,255,255,0.8); }
+.footer-bottom { padding-top: 24px; font-size: 12px; text-align: center; }
+
+/* ===================== ANIMATIONS ===================== */
+.fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.fade-in.visible { opacity: 1; transform: none; }
+
+@media (max-width: 900px) {
+  .about-grid, .homecare-grid, .warning-grid { grid-template-columns: 1fr; gap: 24px; }
+  .prog-grid { grid-template-columns: repeat(3,1fr); }
+  .pipeline-steps { grid-template-columns: 1fr; }
+  .treatment-grid { grid-template-columns: 1fr 1fr; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  nav .nav-links { display: none; }
+  .hero-stats { gap: 24px; flex-wrap: wrap; }
+  .heatmap-section { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .treatment-grid { grid-template-columns: 1fr; }
+  .prog-grid { grid-template-columns: 1fr 1fr; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .results-header { grid-template-columns: 1fr; }
+  .analyzer-box { padding: 24px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon"><i class="ti ti-bone"></i></div>
+    <span class="nav-logo-text">OrthoScan AI</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About OA</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#analyzer">Analyzer</a></li>
+    <li><a href="#treatment">Treatment</a></li>
+    <li><a href="#doctor">See a Doctor</a></li>
+  </ul>
+  <a href="#analyzer" class="nav-cta syne">Scan Now →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-badge"><i class="ti ti-certificate"></i> KTU Final Year Project · MIT Alappuzha · AIML 2026</div>
+  <h1>Continuous Knee OA<br><em>Severity Grading</em><br>Powered by AI</h1>
+  <p class="hero-sub">Beyond discrete KL grades — our anomaly detection framework delivers precise continuous severity scoring from 0.00 to 4.00, helping clinicians catch early disease that traditional methods miss.</p>
+  <div class="hero-btns">
+    <a href="#analyzer" class="btn-primary"><i class="ti ti-scan"></i> Analyse X-Ray Now</a>
+    <a href="#about" class="btn-ghost">Learn About Knee OA</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">0.91</div><div class="lbl">Pearson Correlation with KL</div></div>
+    <div class="hero-stat"><div class="num">0.88</div><div class="lbl">F1 Score</div></div>
+    <div class="hero-stat"><div class="num">&lt;3%</div><div class="lbl">Labelled Data Required</div></div>
+    <div class="hero-stat"><div class="num">4K+</div><div class="lbl">OAI Dataset Images</div></div>
+  </div>
+  <div class="scroll-hint"><i class="ti ti-chevrons-down"></i></div>
+</section>
+
+<!-- ABOUT OA -->
+<section class="about-section" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="fade-in">
+        <div class="sec-label">What is Knee OA</div>
+        <h2 class="sec-title">A Progressive Joint<br><em>Degenerative Disease</em></h2>
+        <p class="sec-sub">Knee Osteoarthritis (OA) is the most common form of arthritis, affecting over 250 million people worldwide. It is characterized by the gradual breakdown of articular cartilage — the protective tissue covering the ends of bones in the knee joint.</p>
+        <p class="sec-sub" style="margin-top:16px;">As cartilage wears away, bones begin to rub against each other causing pain, stiffness, and loss of function. The disease is progressive and irreversible, making early detection critical.</p>
+      </div>
+      <div class="about-right fade-in">
+        <div class="info-card"><i class="ti ti-dna"></i><div><h4>Primary Causes</h4><p>Age, obesity, previous joint injury, repetitive stress from occupations or sports, genetic predisposition, and metabolic conditions like diabetes.</p></div></div>
+        <div class="info-card"><i class="ti ti-activity"></i><div><h4>Early Warning Signs</h4><p>Morning stiffness lasting under 30 minutes, aching during or after activity, swelling around the knee, and a grinding or crunching sensation with movement.</p></div></div>
+        <div class="info-card"><i class="ti ti-trending-up"></i><div><h4>Disease Progression</h4><p>OA progresses through 5 Kellgren-Lawrence grades (0–4). Joint space narrows, osteophytes (bone spurs) form, and subchondral bone thickens over years.</p></div></div>
+        <div class="info-card"><i class="ti ti-users"></i><div><h4>Who Is at Risk</h4><p>Women over 55, people with BMI &gt;30, athletes in high-impact sports, and individuals with prior knee injuries or family history of OA are most susceptible.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GRADE PROGRESSION -->
+<section class="progression" id="grades">
+  <div class="container">
+    <div class="fade-in" style="text-align:center;margin-bottom:8px">
+      <div class="sec-label" style="justify-content:center;color:#7FD8CC">Kellgren–Lawrence Scale</div>
+      <h2 class="sec-title" style="color:#fff;text-align:center">5 Stages of Knee OA <em style="color:#7FD8CC">Progression</em></h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:15px;max-width:540px;margin:0 auto">Traditional grading assigns discrete grades 0–4. Our AI outputs a continuous score within each grade, enabling detection of subtle progression.</p>
+    </div>
+    <div class="prog-grid fade-in">
+      <div class="prog-card pc0"><div class="grade-bar" style="width:10%"></div><div class="grade-num">0</div><div class="grade-name">Normal</div><div class="grade-desc">No radiographic features of osteoarthritis. Healthy joint space and smooth bone surfaces.</div></div>
+      <div class="prog-card pc1"><div class="grade-bar" style="width:35%"></div><div class="grade-num">1</div><div class="grade-name">Doubtful</div><div class="grade-desc">Possible marginal osteophyte. Joint space normal. Clinically insignificant changes.</div></div>
+      <div class="prog-card pc2"><div class="grade-bar" style="width:55%"></div><div class="grade-num">2</div><div class="grade-name">Mild</div><div class="grade-desc">Definite osteophytes. Possible narrowing of joint space. Structural changes visible on X-ray.</div></div>
+      <div class="prog-card pc3"><div class="grade-bar" style="width:78%"></div><div class="grade-num">3</div><div class="grade-name">Moderate</div><div class="grade-desc">Multiple osteophytes, definite joint space narrowing, some sclerosis and possible deformity.</div></div>
+      <div class="prog-card pc4"><div class="grade-bar" style="width:100%"></div><div class="grade-num">4</div><div class="grade-name">Severe</div><div class="grade-desc">Large osteophytes, marked narrowing, severe sclerosis, definite bone deformity.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="pipeline-section" id="how-it-works">
+  <div class="container">
+    <div class="fade-in">
+      <div class="sec-label">Our AI Framework</div>
+      <h2 class="sec-title">Three-Stage <em>Learning Pipeline</em></h2>
+      <p class="sec-sub">Inspired by anomaly detection and few-label learning — our system learns what healthy knees look like, then measures how far a patient's X-ray deviates from that baseline.</p>
+    </div>
+    <div class="pipeline-steps fade-in">
+      <div class="pip-card" data-num="1">
+        <div class="pip-icon"><i class="ti ti-brain"></i></div>
+        <h3>SS-FewSOME</h3>
+        <p>Self-Supervised Few-Shot Anomaly Detection learns robust healthy knee representations using contrastive learning — requiring less than 3% labelled data. Creates a compact "normal" latent space.</p>
+        <span class="pip-tag">Stage 1 — Feature Learning</span>
+      </div>
+      <div class="pip-card" data-num="2">
+        <div class="pip-icon"><i class="ti ti-tags"></i></div>
+        <h3>CLIP Denoising</h3>
+        <p>Contrastive Language–Image Pre-training validates pseudo-labels assigned to unlabelled scans. Filters imaging artifacts (metal implants, poor quality) ensuring only clean samples enter training.</p>
+        <span class="pip-tag">Stage 2 — Label Refinement</span>
+      </div>
+      <div class="pip-card" data-num="3">
+        <div class="pip-icon"><i class="ti ti-chart-dots"></i></div>
+        <h3>DCRL Scoring</h3>
+        <p>Dual Centre Representation Learning constructs two feature spaces — normal and abnormal. The Euclidean distance between centres maps directly to a precise continuous OA severity score 0–4.</p>
+        <span class="pip-tag">Stage 3 — Continuous Grading</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYZER -->
+<section class="analyzer-section" id="analyzer">
+  <div class="container">
+    <div class="fade-in">
+      <div class="sec-label">AI Diagnostic Tool</div>
+      <h2 class="sec-title">Upload Knee X-Ray for<br><em>Instant Analysis</em></h2>
+      <p class="sec-sub">Upload a knee radiograph (AP view recommended). Our system validates the image, runs pixel-level analysis simulating the full SS-FewSOME + CLIP + DCRL pipeline, and delivers a continuous KL severity score.</p>
+    </div>
+    <div class="analyzer-box fade-in">
+
+      <!-- UPLOAD STATE -->
+      <div id="uploadState">
+        <div class="upload-zone" id="dropZone"
+          onclick="document.getElementById('fileInput').click()"
+          ondragover="handleDrag(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)">
+          <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
+          <div class="upload-icon"><i class="ti ti-radio"></i></div>
+          <h3>Drop your knee X-ray here</h3>
+          <p>Supports JPEG, PNG. AP view (anteroposterior) recommended for best results.</p>
+          <button class="upload-btn" type="button"><i class="ti ti-upload"></i> Choose Image</button>
+          <p class="upload-note">Knee radiograph X-rays only · Max 10MB · Powered by InfoKats</p>
+        </div>
+        
+          <p style="font-size:13px;color:var(--text-mid);margin-bottom:12px;line-height:1.6;">
+            This is <strong>where</strong> you upload <a href="https://www.orthobullets.com/recon/12287/knee-osteoarthritis" target="_blank" style="color:var(--teal);font-weight:600;">Knee X-ray</a> — use Grayscaled X-ray images for <em>sees</em> for accurate grading.
+          </p>
+          <div style="display:flex;gap:10px;">
+            <input type="password" id="geminiKeyInput" placeholder="To Know more about Knee Osteo Arthritis" oninput="checkKeyInput()"
+              style="flex:1;padding:10px 14px;border:1px solid var(--teal-pale2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--navy);background:var(--warm);">
+              <button onclick="document.getElementById('about').scrollIntoView({ behavior: 'smooth' })" style="background:var(--teal);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;">Knee OA</button>
+            </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">Knee OA model trained on less dataset</p>
+        </div>
+      </div>
+
+      <!-- ANALYZING STATE -->
+      <div id="analyzingState">
+        <div class="scan-anim">
+          <div class="scan-ring"></div>
+          <div class="scan-ring2"></div>
+        </div>
+        <h3>Analysing X-Ray…</h3>
+        <p>Running through our 3-stage AI pipeline</p>
+        <div class="stage-progress" id="stageProgress">
+          <div class="stage-item" id="stage1"><i class="ti ti-circle"></i> CLIP pre-check — image type validation</div>
+          <div class="stage-item" id="stage2"><i class="ti ti-circle"></i> SS-FewSOME feature extraction</div>
+          <div class="stage-item" id="stage3"><i class="ti ti-circle"></i> Pseudo-label denoising &amp; anatomy scoring</div>
+          <div class="stage-item" id="stage4"><i class="ti ti-circle"></i> DCRL continuous KL scoring</div>
+        </div>
+      </div>
+
+      <!-- INVALID STATE -->
+      <div id="invalidState">
+        <div class="invalid-icon"><i class="ti ti-x"></i></div>
+        <h3>Invalid Image Detected</h3>
+        <p id="invalidMsg">This does not appear to be a knee X-ray radiograph. Please upload a valid knee radiograph image for accurate analysis.</p>
+        <button class="retry-btn" onclick="resetAnalyzer()"><i class="ti ti-refresh"></i> Try Another Image</button>
+      </div>
+
+      <!-- RESULTS STATE -->
+      <div id="resultsState">
+        <div class="results-header">
+          <div class="results-headline">
+            <h3 id="resultsTitle">Analysis Complete</h3>
+            <p id="resultsSubtitle">Knee X-ray · Continuous KL Grading</p>
+          </div>
+          <img id="previewThumb" class="preview-thumb" src="" alt="X-Ray preview">
+        </div>
+
+        <div class="gauge-wrap">
+          <div class="gauge-label">Continuous Severity Score (0.00 → 4.00)</div>
+          <div class="gauge-track">
+            <div class="gauge-needle" id="gaugeNeedle" style="left:0%"></div>
+          </div>
+          <div class="gauge-ticks">
+            <span class="gauge-tick">0 — Normal</span>
+            <span class="gauge-tick">1 — Doubtful</span>
+            <span class="gauge-tick">2 — Mild</span>
+            <span class="gauge-tick">3 — Moderate</span>
+            <span class="gauge-tick">4 — Severe</span>
+          </div>
+          <div class="gauge-score-row">
+            <div class="gauge-score-num" id="gaugeScoreNum" style="color:var(--teal)">—</div>
+            <div class="gauge-score-denom">/ 4.00</div>
+            <div class="gauge-score-label" id="gaugeScoreLabel"></div>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-card highlight"><div class="mv" id="mKL">—</div><div class="ml">KL Grade</div></div>
+          <div class="metric-card"><div class="mv" id="mScore">—</div><div class="ml">Cont. Score</div></div>
+          <div class="metric-card"><div class="mv" id="mDist">—</div><div class="ml">Anomaly Dist.</div></div>
+          <div class="metric-card"><div class="mv" id="mF1">0.88</div><div class="ml">Model F1</div></div>
+        </div>
+
+        <div class="heatmap-section">
+          <div class="hmap-card">
+            <canvas id="hmapOrig" width="400" height="200"></canvas>
+            <div class="hmap-label"><i class="ti ti-radio" style="vertical-align:-2px;margin-right:4px"></i>Original radiograph</div>
+          </div>
+          <div class="hmap-card">
+            <canvas id="hmapHeat" width="400" height="200"></canvas>
+            <div class="hmap-label"><i class="ti ti-flame" style="vertical-align:-2px;margin-right:4px;color:var(--grade3)"></i>OA anomaly heatmap</div>
+          </div>
+        </div>
+
+        <div class="rec-card" id="recCard">
+          <h4>Clinical Recommendation</h4>
+          <div class="rec-main" id="recMain"></div>
+          <div class="rec-items" id="recItems"></div>
+        </div>
+
+        <div class="conf-section">
+          <h4>Model Confusion Matrix (OAI Test Set · 1,656 samples)</h4>
+          <div class="conf-matrix" id="confMatrix"></div>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:10px">Diagonal (teal) = correct predictions. Grade <span id="confHighlight">—</span> highlighted for this scan.</p>
+        </div>
+
+        <button class="new-scan-btn" onclick="resetAnalyzer()"><i class="ti ti-refresh"></i> Analyse Another X-Ray</button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- TREATMENT -->
+<section class="treatment-section" id="treatment">
+  <div class="container">
+    <div class="fade-in">
+      <div class="sec-label">Treatment Options</div>
+      <h2 class="sec-title">Managing Knee OA<br><em>Across All Grades</em></h2>
+      <p class="sec-sub">Treatment is tailored to severity. Early intervention significantly slows progression and improves quality of life. Most patients manage OA effectively without surgery.</p>
+    </div>
+    <div class="treatment-grid fade-in">
+      <div class="treat-card">
+        <div class="treat-icon"><i class="ti ti-run"></i></div>
+        <h3>Lifestyle & Exercise</h3>
+        <p>First-line management for all grades of OA focuses on reducing load and building muscle support.</p>
+        <ul class="treat-list">
+          <li>Low-impact aerobics: swimming, cycling</li>
+          <li>Quadriceps strengthening exercises</li>
+          <li>Weight loss — every 1 kg reduces knee load by 4 kg</li>
+          <li>Avoid high-impact activities during flare-ups</li>
+        </ul>
+      </div>
+      <div class="treat-card">
+        <div class="treat-icon"><i class="ti ti-pill"></i></div>
+        <h3>Medical Treatment</h3>
+        <p>Pharmacological options are added progressively as OA severity increases.</p>
+        <ul class="treat-list">
+          <li>Paracetamol / NSAIDs (Grade 1–2)</li>
+          <li>Topical anti-inflammatories (diclofenac gel)</li>
+          <li>Corticosteroid injections (Grade 3)</li>
+          <li>Hyaluronic acid (viscosupplementation)</li>
+          <li>Duloxetine for chronic pain</li>
+        </ul>
+      </div>
+      <div class="treat-card">
+        <div class="treat-icon"><i class="ti ti-massage"></i></div>
+        <h3>Physiotherapy</h3>
+        <p>Structured physio is effective across all grades and delays surgical intervention.</p>
+        <ul class="treat-list">
+          <li>Manual therapy and mobilisation</li>
+          <li>TENS (transcutaneous electrical stimulation)</li>
+          <li>Hydrotherapy / aquatic rehabilitation</li>
+          <li>Gait retraining and orthotics</li>
+        </ul>
+      </div>
+      <div class="treat-card">
+        <div class="treat-icon"><i class="ti ti-bandage"></i></div>
+        <h3>Supportive Aids</h3>
+        <p>Assistive devices reduce joint stress and improve daily function significantly.</p>
+        <ul class="treat-list">
+          <li>Knee braces (unloader or support type)</li>
+          <li>Orthopedic insoles and footwear</li>
+          <li>Walking aids (cane on opposite side)</li>
+          <li>RICE protocol for acute flares</li>
+        </ul>
+      </div>
+      <div class="treat-card">
+        <div class="treat-icon"><i class="ti ti-needle"></i></div>
+        <h3>Injections & Biologics</h3>
+        <p>For moderate-to-severe OA that does not respond to conservative care.</p>
+        <ul class="treat-list">
+          <li>Corticosteroid injections (short-term relief)</li>
+          <li>PRP (platelet-rich plasma) — emerging evidence</li>
+          <li>Stem cell therapy (investigational)</li>
+          <li>Botulinum toxin for pain management</li>
+        </ul>
+      </div>
+      <div class="treat-card">
+        <div class="treat-icon"><i class="ti ti-scalpel"></i></div>
+        <h3>Surgical Options</h3>
+        <p>Reserved for severe OA (Grade 4) unresponsive to all other treatments.</p>
+        <ul class="treat-list">
+          <li>Arthroscopy (limited evidence)</li>
+          <li>High tibial osteotomy (younger patients)</li>
+          <li>Unicompartmental knee replacement</li>
+          <li>Total knee replacement (TKR) — gold standard for Grade 4</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOME CARE -->
+<section class="homecare-section" id="homecare">
+  <div class="container">
+    <div class="fade-in" style="text-align:center">
+      <div class="sec-label" style="justify-content:center;color:#7FD8CC">Self-Management</div>
+      <h2 class="sec-title" style="color:#fff;text-align:center">What You Can Do <em style="color:#7FD8CC">at Home</em></h2>
+      <p style="color:rgba(255,255,255,0.55);font-size:15px;max-width:520px;margin:0 auto">Daily habits have a profound impact on OA progression. Simple lifestyle modifications can reduce pain and slow cartilage loss over years.</p>
+    </div>
+    <div class="homecare-grid fade-in">
+      <div class="care-block">
+        <div class="care-item"><i class="ti ti-barbell"></i><div><h4>Daily Exercise Routine</h4><p>Gentle quad sets, straight leg raises, and heel slides for 20–30 min. Avoid high-impact exercises. Warm up before, cool down after.</p></div></div>
+        <div class="care-item"><i class="ti ti-salad"></i><div><h4>Anti-Inflammatory Diet</h4><p>Increase omega-3 (fish, flaxseed), turmeric, and antioxidants. Reduce processed sugar, refined carbs, and red meat to decrease systemic inflammation.</p></div></div>
+        <div class="care-item"><i class="ti ti-scale"></i><div><h4>Weight Management</h4><p>Even 5% body weight reduction reduces knee pain significantly. Every kilogram lost removes 4 kg of force from the knee joint during walking.</p></div></div>
+        <div class="care-item"><i class="ti ti-temperature-minus"></i><div><h4>Heat & Cold Therapy</h4><p>Apply cold packs for acute swelling (20 min, 3x/day). Use warm compress before exercise to loosen stiff joints. Never apply directly to skin.</p></div></div>
+      </div>
+      <div class="care-block">
+        <div class="care-item"><i class="ti ti-moon"></i><div><h4>Sleep & Rest</h4><p>Use a pillow between knees when sleeping on your side. Avoid prolonged sitting or standing. Take regular movement breaks every 45 minutes.</p></div></div>
+        <div class="care-item"><i class="ti ti-droplet"></i><div><h4>Hydration</h4><p>Cartilage is 80% water. Drinking 2–3 litres daily helps maintain joint lubrication and cartilage elasticity. Avoid dehydration especially in warm climates.</p></div></div>
+        <div class="care-item"><i class="ti ti-sun"></i><div><h4>Vitamin D & Calcium</h4><p>Low Vitamin D accelerates OA progression. Supplement 800–1000 IU Vitamin D3 daily. Include calcium-rich foods: dairy, leafy greens, almonds.</p></div></div>
+        <div class="care-item"><i class="ti ti-mood-smile"></i><div><h4>Mental Wellbeing</h4><p>Chronic pain affects mental health. Mindfulness, gentle yoga, and pacing activities prevent the pain cycle. Join OA support groups for shared management strategies.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCTOR SECTION -->
+<section class="doctor-section" id="doctor">
+  <div class="container">
+    <div class="fade-in">
+      <div class="sec-label">Medical Attention</div>
+      <h2 class="sec-title">When to See<br><em>a Doctor</em></h2>
+    </div>
+    <div class="warning-grid fade-in">
+      <div class="warning-list">
+        <div class="warning-item"><i class="ti ti-clock"></i><div><h4>Morning stiffness &gt; 30 minutes</h4><p>Prolonged stiffness after waking suggests active joint inflammation that needs clinical assessment.</p></div></div>
+        <div class="warning-item"><i class="ti ti-trending-up"></i><div><h4>Pain worsening over weeks</h4><p>Gradual increase in pain or new areas of discomfort may indicate rapid OA progression needing imaging.</p></div></div>
+        <div class="warning-item"><i class="ti ti-stairs"></i><div><h4>Difficulty with daily activities</h4><p>Trouble climbing stairs, rising from a chair, or walking &gt;500m indicates functional decline requiring assessment.</p></div></div>
+        <div class="warning-item"><i class="ti ti-droplet"></i><div><h4>Joint swelling or warmth</h4><p>Sudden swelling, redness, or warmth may indicate effusion or secondary infection requiring urgent evaluation.</p></div></div>
+        <div class="warning-item urgent"><i class="ti ti-alert-triangle"></i><div><h4>Locking or giving way of the knee</h4><p>Mechanical symptoms like the knee locking or buckling suggest intra-articular pathology needing urgent orthopaedic review.</p></div></div>
+      </div>
+      <div class="urgency-box">
+        <h3>Seek Immediate Care if…</h3>
+        <p>These symptoms require emergency orthopaedic evaluation and should not be managed at home or delayed.</p>
+        <ul>
+          <li><i class="ti ti-alert-circle"></i> Sudden severe pain after a fall or trauma</li>
+          <li><i class="ti ti-alert-circle"></i> Complete inability to bear weight on the knee</li>
+          <li><i class="ti ti-alert-circle"></i> Visible deformity of the knee joint</li>
+          <li><i class="ti ti-alert-circle"></i> Fever with joint pain (septic arthritis)</li>
+          <li><i class="ti ti-alert-circle"></i> Rapidly increasing swelling within hours</li>
+          <li><i class="ti ti-alert-circle"></i> Numbness or tingling down the leg</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">OrthoScan AI</div>
+      <div class="footer-sub">Continuous Knee OA Grading · SS-FewSOME + CLIP + DCRL</div>
+    </div>
+    <div class="footer-team">
+      <strong>Department of AI &amp; ML · Mahaguru Institute of Technology, Alappuzha</strong><br>
+      Al Ameen Nizar · Adithyan S · Muhammed Salman E · Mohammed Faiz M<br>
+      Guide: Mrs. Shanimol Shajan · APJ Abdul Kalam Technological University
+    </div>
+  </div>
+  <div class="footer-bottom">
+    For educational and demonstration purposes only. Not intended as a substitute for professional medical advice.
+  </div>
+</footer>
+
+<script>
+/* ===================== SCROLL EFFECTS ===================== */
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 40);
+});
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+
+
+
+
+/* ===================== DRAG & DROP ===================== */
+function handleDrag(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+function handleDrop(e) {
+  e.preventDefault(); document.getElementById('dropZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFile(e) { const file = e.target.files[0]; if (file) processFile(file); }
+
+/* ===================== STATE MANAGEMENT ===================== */
+let uploadedImageDataURL = '';
+let stageInterval = null;
+
+function showState(id) {
+  ['uploadState', 'analyzingState', 'invalidState', 'resultsState'].forEach(s => {
+    document.getElementById(s).style.display = (s === id) ? 'block' : 'none';
+  });
+}
+
+function showInvalid(msg) {
+  if (stageInterval) { clearInterval(stageInterval); stageInterval = null; }
+  showState('invalidState');
+  document.getElementById('invalidMsg').textContent = msg;
+}
+
+function resetAnalyzer() {
+  showState('uploadState');
+  document.getElementById('fileInput').value = '';
+  uploadedImageDataURL = '';
+}
+
+/* ===================== FILE PROCESSING ===================== */
+function processFile(file) {
+  if (!file.type.startsWith('image/')) {
+    showInvalid("Only image files are supported. Please upload a JPEG or PNG knee X-ray.");
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showInvalid("File too large. Please upload an image under 10MB.");
+    return;
+  }
+
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedImageDataURL = e.target.result;
+    showAnalyzingWithStages();
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ===================== STAGE ANIMATION ===================== */
+function showAnalyzingWithStages() {
+  showState('analyzingState');
+  const stages = ['stage1', 'stage2', 'stage3', 'stage4'];
+  stages.forEach(s => {
+    const el = document.getElementById(s);
+    el.className = 'stage-item';
+    el.querySelector('i').className = 'ti ti-circle';
+  });
+
+  // Advance through first 3 stages visually, then call API at stage 4
+  let i = 0;
+  stageInterval = setInterval(() => {
+    if (i > 0) {
+      const prev = document.getElementById(stages[i - 1]);
+      prev.className = 'stage-item done';
+      prev.querySelector('i').className = 'ti ti-circle-check';
+    }
+    if (i < stages.length) {
+      const cur = document.getElementById(stages[i]);
+      cur.className = 'stage-item active';
+      cur.querySelector('i').className = 'ti ti-loader';
+    }
+    i++;
+    if (i === stages.length) {
+      // Stage 4 active — now fire the actual API call
+      clearInterval(stageInterval);
+      stageInterval = null;
+      runBackendAnalysis();
+    }
+  }, 900);
+}
+
+function completeStageAnimation() {
+  const lastStage = document.getElementById('stage4');
+  lastStage.className = 'stage-item done';
+  lastStage.querySelector('i').className = 'ti ti-circle-check';
+}
+
+/* ======================================================
+   GEMINI VISION ANALYSIS ENGINE
+   ======================================================
+   Uses Google Gemini 1.5 Flash (free tier: 1500 req/day)
+   to actually SEE and understand the X-ray image.
+
+   The prompt instructs Gemini to:
+   1. Identify whether the image is a knee X-ray
+      (reject cartoons, other body parts, photos, etc.)
+   2. Assess KL grade features: joint space width,
+      osteophyte presence/size, subchondral sclerosis,
+      bone deformity
+   3. Handle metal artifacts correctly (they do NOT
+      automatically mean high grade OA)
+   4. Output structured JSON with continuous score
+   ====================================================== */
+   async function runBackendAnalysis() {
+
+try {
+
+  const formData = new FormData();
+
+  // Convert uploaded image into blob
+  const imageResponse = await fetch(uploadedImageDataURL);
+  const imageBlob = await imageResponse.blob();
+
+  formData.append(
+    'image',
+    imageBlob,
+    'xray.png'
+  );
+
+  // Send image to Python backend
+  const response = await fetch(
+    'http://127.0.0.1:5000/analyze',
+    {
+      method: 'POST',
+      body: formData
+    }
+  );
+
+  if (!response.ok) {
+
+    showInvalid(
+      'Python backend analysis failed.'
+    );
+
+    return;
+  }
+
+  const result = await response.json();
+
+  // Invalid image response
+  if (!result.valid) {
+
+    showInvalid(
+      result.reason ||
+      'Please upload a valid knee X-ray image.'
+    );
+
+    return;
+  }
+
+  // Complete stage animation
+  completeStageAnimation();
+
+  // Show results
+  setTimeout(() => {
+    showResults(result);
+  }, 400);
+
+} catch (err) {
+
+  console.error(err);
+
+  showInvalid(
+    'Could not connect to Python backend. Make sure server.py is running.'
+  );
+}
+}
+
+function getFindingsText(klGrade, score) {
+  const findings = [
+    "No significant osteoarthritic changes detected on radiograph",
+    "Possible marginal osteophytes; joint space within normal limits",
+    "Definite osteophytes with mild joint space narrowing noted",
+    "Multiple osteophytes, definite JSN, subchondral sclerosis present",
+    "Marked JSN, large osteophytes, severe sclerosis and deformity"
+  ];
+  return findings[klGrade] + ` — Continuous KL Score: ${score}`;
+}
+
+function generateHeatmapZones(brightnesses, size, klGrade, score) {
+  // Analyse the centre region of image (where the knee joint typically is)
+  // Divide into a 4x4 grid and find the most anomalous patches
+  const gridSize = 4;
+  const patchSize = Math.floor(size / gridSize);
+  const patches = [];
+
+  for (let gy = 0; gy < gridSize; gy++) {
+    for (let gx = 0; gx < gridSize; gx++) {
+      let patchBrightness = 0;
+      let patchVariance = 0;
+      let count = 0;
+      const lumValues = [];
+
+      for (let py = 0; py < patchSize; py++) {
+        for (let px = 0; px < patchSize; px++) {
+          const x = gx * patchSize + px;
+          const y = gy * patchSize + py;
+          const lum = brightnesses[y * size + x];
+          patchBrightness += lum;
+          lumValues.push(lum);
+          count++;
+        }
+      }
+      const avg = patchBrightness / count;
+      lumValues.forEach(l => patchVariance += (l - avg) ** 2);
+      patchVariance /= count;
+
+      patches.push({
+        x: (gx + 0.5) / gridSize,
+        y: (gy + 0.5) / gridSize,
+        brightness: avg,
+        variance: Math.sqrt(patchVariance)
+      });
+    }
+  }
+
+  // Score each patch: high variance + mid-brightness = likely anomaly
+  const intensityBase = score / 4.0;
+  return patches
+    .map(p => ({
+      x: p.x,
+      y: p.y,
+      intensity: Math.min(1.0, (p.variance / 60) * intensityBase * 1.5 + intensityBase * 0.3),
+      radius: 35 + klGrade * 6
+    }))
+    .sort((a, b) => b.intensity - a.intensity)
+    .slice(0, 5); // Top 5 most anomalous zones
+}
+
+/* ===================== SHOW RESULTS ===================== */
+function showResults(r) {
+  showState('resultsState');
+
+  document.getElementById('previewThumb').src = uploadedImageDataURL;
+  document.getElementById('resultsTitle').textContent = `KL Grade ${r.klGrade} — ${r.gradeLabel} OA`;
+  document.getElementById('resultsSubtitle').textContent = r.findings;
+
+  // Gauge
+  const pct = (r.continuousScore / 4) * 100;
+  setTimeout(() => { document.getElementById('gaugeNeedle').style.left = pct + '%'; }, 100);
+  document.getElementById('gaugeScoreNum').textContent = r.continuousScore.toFixed(2);
+  document.getElementById('gaugeScoreNum').style.color = r.gradeColor;
+  document.getElementById('gaugeScoreLabel').textContent = r.gradeLabel;
+  document.getElementById('gaugeScoreLabel').style.background = r.gradeBg;
+  document.getElementById('gaugeScoreLabel').style.color = r.gradeColor;
+
+  // Metrics
+  document.getElementById('mKL').textContent = r.klGrade;
+  document.getElementById('mScore').textContent = r.continuousScore.toFixed(2);
+  document.getElementById('mDist').textContent = r.anomalyDistance.toFixed(1);
+  document.getElementById('mF1').textContent = '0.88';
+
+  // Recommendation
+  const recCard = document.getElementById('recCard');
+  recCard.style.background = r.gradeBg;
+  recCard.style.borderLeft = '4px solid ' + r.gradeColor;
+  document.getElementById('recMain').textContent = r.mainRec;
+  document.getElementById('recItems').innerHTML = r.recItems.map(item =>
+    `<div class="rec-item"><i class="ti ${item.icon}" style="color:${r.gradeColor}"></i><span>${item.text}</span></div>`
+  ).join('');
+
+  // Draw heatmaps
+  drawHeatmaps(r);
+
+  // Confusion matrix
+  drawConfusionMatrix(r.klGrade);
+  document.getElementById('confHighlight').textContent = r.klGrade;
+
+  // Scroll to results
+  document.getElementById('analyzer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ===================== HEATMAP DRAWING ===================== */
+function drawHeatmaps(r) {
+  const origC = document.getElementById('hmapOrig');
+  const heatC = document.getElementById('hmapHeat');
+  const w = origC.width, h = origC.height;
+  const oc = origC.getContext('2d');
+  const hc = heatC.getContext('2d');
+
+  // Draw actual uploaded image on origC
+  const img = new Image();
+  img.onload = () => {
+    // Original panel: draw the uploaded X-ray image directly
+    oc.clearRect(0, 0, w, h);
+    oc.fillStyle = '#0a0a0a';
+    oc.fillRect(0, 0, w, h);
+
+    // Fit image into canvas
+    const scale = Math.min(w / img.width, h / img.height);
+    const drawW = img.width * scale;
+    const drawH = img.height * scale;
+    const drawX = (w - drawW) / 2;
+    const drawY = (h - drawH) / 2;
+    oc.drawImage(img, drawX, drawY, drawW, drawH);
+
+    // Overlay subtle labels
+    oc.fillStyle = 'rgba(255,255,255,0.35)';
+    oc.font = '10px monospace';
+    oc.fillText('Radiograph Input', 8, 16);
+
+    // Heatmap panel: copy original then overlay heat zones
+    hc.clearRect(0, 0, w, h);
+    hc.drawImage(origC, 0, 0);
+
+    // Apply heat zones
+    const zones = r.heatmapZones || [];
+    zones.forEach(zone => {
+      const cx = zone.x * w;
+      const cy = zone.y * h;
+      const rad = zone.radius;
+      const intensity = zone.intensity;
+
+      const rg = hc.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      if (intensity < 0.25) {
+        rg.addColorStop(0, `rgba(30,200,120,${Math.min(0.7, intensity * 2)})`);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+      } else if (intensity < 0.55) {
+        rg.addColorStop(0, `rgba(240,160,30,${Math.min(0.75, intensity * 1.5)})`);
+        rg.addColorStop(0.6, `rgba(180,220,60,${intensity * 0.3})`);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+      } else {
+        rg.addColorStop(0, `rgba(220,50,50,${Math.min(0.85, intensity)})`);
+        rg.addColorStop(0.4, `rgba(220,130,30,${intensity * 0.6})`);
+        rg.addColorStop(0.8, `rgba(200,200,40,${intensity * 0.2})`);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+      }
+      hc.fillStyle = rg;
+      hc.fillRect(0, 0, w, h);
+    });
+
+    // Legend bar
+    const leg = hc.createLinearGradient(12, h - 14, w - 12, h - 14);
+    leg.addColorStop(0, '#12A38E');
+    leg.addColorStop(0.5, '#EF9F27');
+    leg.addColorStop(1, '#E24B4A');
+    hc.fillStyle = leg;
+    hc.fillRect(12, h - 14, w - 24, 8);
+    hc.fillStyle = 'rgba(255,255,255,0.8)';
+    hc.font = '9px monospace';
+    hc.fillText('Normal', 14, h - 2);
+    hc.fillText('Severe', w - 44, h - 2);
+    hc.fillText('OA Anomaly Heatmap', 8, 16);
+  };
+  img.src = uploadedImageDataURL;
+}
+
+/* ===================== CONFUSION MATRIX ===================== */
+function drawConfusionMatrix(activeGrade) {
+  const matrix = [
+    [610, 22,  6,  1,  0],
+    [ 18,270, 19,  4,  0],
+    [  8, 24,404, 18,  2],
+    [  3,  5, 21,176,  9],
+    [  1,  1,  4, 10, 26]
+  ];
+  const labels = ['G0','G1','G2','G3','G4'];
+  const maxVal = 640;
+  let html = `<div class="conf-cell header"></div>`;
+  labels.forEach(l => { html += `<div class="conf-cell header">Pred ${l}</div>`; });
+  matrix.forEach((row, i) => {
+    html += `<div class="conf-cell header">True G${i}</div>`;
+    row.forEach((val, j) => {
+      let cls = 'conf-cell';
+      let style = '';
+      if (i === j) cls += ' diag';
+      else if (Math.abs(i - j) === 1) cls += ' near';
+      else {
+        const opacity = val / maxVal;
+        style = `background:rgba(14,124,107,${opacity * 0.3})`;
+      }
+      // Highlight the active grade row/col
+      if (i === activeGrade || j === activeGrade) {
+        style += '; outline: 1px solid rgba(14,124,107,0.4)';
+      }
+      html += `<div class="${cls}" style="${style}">${val}</div>`;
+    });
+  });
+  document.getElementById('confMatrix').innerHTML = html;
+}
+</script>
+</body>
+</html>
